@@ -265,13 +265,13 @@ end
 function on_game_load()
 	-- Azazel Disguise Fix
 	if (alife_storage_manager.get_state().azazel_death) then
-		default_faction = db.actor and character_community(db.actor):sub(7) or ""
+		update_default(character_community(db.actor):sub(7))
 	end
 
 	--printf("DBG on_game_load")
 	local defaults = {
 		disguise_system = {
-			ds_default_faction = default_faction or character_community(db.actor):sub(7) or "stalker",
+			ds_default_faction = default_faction,
 			ds_last_seen = last_seen,
 			ds_suspicion = suspicion,
 			ds_callout = callout,
