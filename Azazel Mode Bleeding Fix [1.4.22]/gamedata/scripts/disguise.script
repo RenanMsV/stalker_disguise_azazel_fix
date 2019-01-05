@@ -25,6 +25,10 @@ local suspicion_limit = 100
 local warning_limit = suspicion_limit * 2 / 3
 local dewarn_limit = suspicion_limit * 1 / 3
 
+local addon = { version = "0.0.1", description = "Disguise yourself using other faction's outfits.", author = "strelocc, seargedp, SarisKhan, RenanMsV"}
+
+local debugMessages = false -- debug
+
 function on_game_start()
 	RegisterScriptCallback("actor_on_update",update)
 	RegisterScriptCallback("npc_on_update",npc_update)
@@ -38,6 +42,8 @@ local last_seen = {}
 local suspicion = {}
 local callout = false
 local warned = false
+local updated = false
+local fix_not_installed = false
 
 function npc_update(npc)
 	if not default_faction or not db.actor then return end
@@ -179,6 +185,7 @@ function change_to(x,naked)
 		news_manager.send_tip(db.actor, "You're now identified as a member of " .. game.translate_string(default_faction) .. " again.", nil, nil, 5000)
 
 		db.actor:set_character_community( ("actor_" .. x), 0, 0 )
+		game_relations.set_community_goodwill_for_faction("actor_"..x)
 		suspicion = {}
 		callout = true
 		warned = true
@@ -194,6 +201,7 @@ function change_to(x,naked)
 		end
 		
 		db.actor:set_character_community( ("actor_" .. x), 0, 0 )
+		game_relations.set_community_goodwill_for_faction("actor_"..x)
 		suspicion = {}
 		callout = false
 		warned = false
@@ -219,7 +227,7 @@ function comm_from_outfit(section)
 		new_comm = "killer"
 	elseif(string.match(section,"monolith_")) then
 		new_comm = "monolith"
-	elseif(string.match(section,"stalker_") or string.match(section,"scientific_") or string.match(section,"exo_")) then
+	elseif(string.match(section,"stalker_") or string.match(section,"scientific_") or string.match(section,"exo_") or string.match(section,"novice_")) then
 		new_comm = "stalker"
 	end
 	
@@ -233,6 +241,20 @@ function update_default(faction)
 	warned = true
 
 	--printf("DBG default " .. (default_faction or "?"))
+end
+
+function get_default()
+	return default_faction
+	--printf("DBG default " .. (default_faction or "?"))
+end
+
+function get_current()
+	return character_community(db.actor):sub(7)
+	--printf("DBG default " .. (default_faction or "?"))
+end
+
+function count_companions()
+	return count_table(axr_companions.list_actor_squad_by_id())
 end
 
 function anybody_see()
@@ -264,8 +286,18 @@ end
 
 function on_game_load()
 	-- Azazel Disguise Fix
-	if (alife_storage_manager.get_state().azazel_death) then
-		update_default(character_community(db.actor):sub(7))
+	if(alife_storage_manager.get_state().azazel_db_new ~= nil and alife_storage_manager.get_state().azazel_db_update ~= nil) then
+		if (alife_storage_manager.get_state().azazel_db_new ~= default_faction and alife_storage_manager.get_state().azazel_db_update) then
+			update_default(alife_storage_manager.get_state().azazel_db_new)
+			alife_storage_manager.get_state().azazel_db_update = false
+			updated = true
+			debug_sc(strformat("Changing default faction to: %s", alife_storage_manager.get_state().azazel_db_new))
+		else
+			alife_storage_manager.get_state().azazel_db_update = false
+			updated = false
+		end
+	else
+		fix_not_installed = true
 	end
 
 	--printf("DBG on_game_load")
@@ -275,12 +307,18 @@ function on_game_load()
 			ds_last_seen = last_seen,
 			ds_suspicion = suspicion,
 			ds_callout = callout,
-			ds_warned = warned,
+			ds_warned = warned
 		}
 	}
 	load_state(defaults)
 
 	oldfit = db.actor:item_in_slot(7)
+
+	debug_sc(
+		"Version %c[255,255,0,0]" .. addon["version"] .. "%c[default] Loaded and Running...\\n"..
+		addon["description"] .. "\\n" ..
+		debug_vars() -- debug config and extra vars from debug_vars function
+	) -- debug
 
 	--printf("DBG default " .. (default_faction or "?"))
 end
@@ -326,4 +364,21 @@ function load_state(data)
 	end
 
 	--printf("DBG default " .. (default_faction or "?"))
+end
+
+function debug_sc(text, icon) -- debug function
+	if not debugMessages then return end
+	news_manager.send_tip(db.actor, "Disguise >> Debug Message" .. "\\n" .. text, nil, "tourist", 50000)
+	alun_utils.printf(("Disguise >> Debug Message" .. "\\n" .. text))
+end
+
+function debug_vars() -- return config and extra vars as strings
+	return strformat("Configs: Default Faction: %s , Current Faction: %s , Azazel Enabled: %s , Azazel Death: %s , Actor Squad Count: %s , Need Update: %s , Is Azazel Fix Installed: %s", get_default(), get_current(), alife_storage_manager.get_state().enable_azazel_mode, alife_storage_manager.get_state().azazel_death, count_companions(), updated, not fix_not_installed)
+end
+
+function count_table(table)
+	if table == nil then return "nil" end
+	local count = 0
+	for _ in pairs(table) do count = count + 1 end
+	return count 
 end
