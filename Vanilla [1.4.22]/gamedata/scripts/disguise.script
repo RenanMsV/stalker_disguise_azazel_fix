@@ -143,6 +143,11 @@ local oldfit
 function update()
 	if not default_faction then return end
 
+	if alife_storage_manager.get_state().azazel_db_samemap then
+		update_default(alife_storage_manager.get_state().azazel_db_new)
+		alife_storage_manager.get_state().azazel_db_samemap = false
+	end
+
 	local outfit = db.actor:item_in_slot(7)
 	
 	local broken = outfit and outfit:condition() or 0

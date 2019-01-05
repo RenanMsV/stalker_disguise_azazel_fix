@@ -248,10 +248,15 @@ function actor_on_before_death(whoID,flags)
 		--end
 	end
 		
+	alife_storage_manager.get_state().azazel_db_old = old_faction -- set data
+	alife_storage_manager.get_state().azazel_db_new = new_faction -- set data
+	alife_storage_manager.get_state().azazel_db_update = true
+	
 	-- initiate transitition and removal of victim
 	local level_name = sim:level_name(game_graph():vertex(se_obj.m_game_vertex_id):level_id())
 	if (level_name == level.name()) then 
 		local hud = get_hud()
+		alife_storage_manager.get_state().azazel_db_samemap = true
 		hud:HidePdaMenu()
 		hud:HideActorMenu()
 		db.actor:set_actor_position(se_obj.position)
@@ -261,6 +266,7 @@ function actor_on_before_death(whoID,flags)
 		level.add_pp_effector("deimos1.ppe", 210410, false)
 		safe_release_manager.release(se_obj)
 	else
+		alife_storage_manager.get_state().azazel_db_samemap = false
 		local pos = se_obj.position
 		local lvid = se_obj.m_level_vertex_id
 		local gvid = se_obj.m_game_vertex_id
@@ -273,9 +279,6 @@ function actor_on_before_death(whoID,flags)
 		end
 		CreateTimeEvent(0,"tele",0,tele_me_now,se_obj.id)
 	end
-	alife_storage_manager.get_state().azazel_db_old = old_faction -- set data
-	alife_storage_manager.get_state().azazel_db_new = new_faction -- set data
-	alife_storage_manager.get_state().azazel_db_update = true
 	
 	flags.ret_value = false
 end
