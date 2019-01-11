@@ -1,0 +1,2 @@
+users can change the outfits and their factions so you can easily config it to use with mods that adds new outfits
+user can set the exact ammount of money they want to respawn with

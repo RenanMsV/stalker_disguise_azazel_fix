@@ -1,1 +1,0 @@
-Copy azazel_mode.script file to xxx\gamedata\scripts
