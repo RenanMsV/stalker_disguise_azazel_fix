@@ -1,0 +1,36 @@
+; Disguise Custom config file. Setup as you like.
+[DisguiseCfg]
+;	time you need to be hidden (not seen by any npc) before changing outfit to make the disguise effective, 100 means roughly 10 seconds
+	time_to_forget = 100
+;	minimum condition for an outfit to work as disguise
+;	set to 0 to not consider outfit condition, if you want only mint condition outfits to work set to 0.99 and not 1 because condition can never be exactly 1
+	min_condition = 0.25
+;	minimum condition for an helmet to reduce suspicion buildup
+;	set to 0 to not consider helmet condition, if you want only mint condition helmets to work set to 0.99 and not 1 because condition can never be exactly 1
+	min_condition_h = 0.25
+;	distance within npc will start doubting the disguise (if they are seeing you)
+;	5 = 1 wood box width
+	discovery_distance = 25
+;	how much time it takes to be discovered when in view, 100 is roughly 1 minute with uncovered face
+	suspicion_limit = 100
+;	debug messages? for developers
+	debugMessages = true
+;
+[Outfits]
+;	Here you can change or add new outfits (from mods) or new factions (from mods) to the disguise system.
+;	outfit_ = faction
+	specops_ = army ; army
+	military_ = army
+	bandit_ = bandit ; bandit
+	trenchcoat_ = bandit
+	banditmerc_	 = bandit
+	cs_ = csky ; clear sky
+	svoboda_ = freedom ; freedom
+	ecolog_ = ecolog ; ecologists
+	dolg_ = dolg ; duty
+	merc_ = killer ; mercenary
+	monolith_ = monolith ; monolith
+	stalker_ = stalker ; loner
+	scientific_ = stalker
+	exo_ = stalker
+	novice_ = stalker

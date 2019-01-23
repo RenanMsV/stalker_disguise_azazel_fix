@@ -1,5 +1,5 @@
 --- Azazel Customizable by RenanMsV for CoC 1.4.22 ---
-local addon = { version = "0.0.1", description = "Death is not the end here, get a new body after all deaths.", author = "strelocc, seargedp, SarisKhan, RenanMsV"}
+local addon = { version = "0.0.1", description = "Death is not the end here, get a new body after all deaths.", author = "coc1.4.22, RenanMsV"}
 
 local config_ini = ini_file("azazel_customizable.ltx")
 local azazel_customizable_config = {

@@ -5,31 +5,29 @@
 -- Tweaked for CoC 1.4.22: SarisKhan; Azazel mode fix: RenanMsV
 ----------------------
 
---time you need to be hidden (not seen by any npc) before changing outfit to make the disguise effective, 100 means roughly 10 seconds
+local config_ini = ini_file("disguise_customizable.ltx")
+local outfits_by_community = {}
+
+local addon = { version = "0.0.1", description = "Disguise yourself using other faction's outfits.", author = "strelocc, seargedp, SarisKhan, RenanMsV" }
+
 local time_to_forget = 100
-
---minimum condition for an outfit to work as disguise
---set to 0 to not consider outfit condition, if you want only mint condition outfits to work set to 0.99 and not 1 because condition can never be exactly 1
 local min_condition = 0.25
-
---minimum condition for an helmet to reduce suspicion buildup
---set to 0 to not consider helmet condition, if you want only mint condition helmets to work set to 0.99 and not 1 because condition can never be exactly 1
 local min_condition_h = 0.25
-
---distance within npc will start doubting the disguise (if they are seeing you)
---5 = 1 wood box width
 local discovery_distance = 25
-
---how much time it takes to be discovered when in view, 100 is roughly 1 minute with uncovered face
 local suspicion_limit = 100
+local debugMessages = false -- debug
+
+printf("Loaded time_to_forget : %s", time_to_forget)
+printf("Loaded min_condition: %s", min_condition)
+printf("Loaded min_condition_h: %s", min_condition_h)
+printf("Loaded discovery_distance: %s", discovery_distance)
+printf("Loaded suspicion_limit: %s", suspicion_limit)
+
 local warning_limit = suspicion_limit * 2 / 3
 local dewarn_limit = suspicion_limit * 1 / 3
 
-local addon = { version = "0.0.1", description = "Disguise yourself using other faction's outfits.", author = "strelocc, seargedp, SarisKhan, RenanMsV"}
-
-local debugMessages = false -- debug
-
 function on_game_start()
+	loadIniConfigs()
 	RegisterScriptCallback("actor_on_update",update)
 	RegisterScriptCallback("npc_on_update",npc_update)
 	
@@ -163,7 +161,7 @@ function update()
 			new_comm = default_faction
 			change_to(new_comm,true)
 		else
-			new_comm = comm_from_outfit(outfit)
+			new_comm = comm_from_outfit(outfit) -- comm_from_outfit
 			if new_comm == default_faction then
 				change_to(new_comm,false)
 			elseif broken then
@@ -213,7 +211,7 @@ function change_to(x,naked)
 	end
 end
 
-function comm_from_outfit(section)
+function comm_from_outfit_old(section)
 	local new_comm = default_faction
 	
 	if(string.match(section,"specops_") or string.match(section,"military_")) then
@@ -236,6 +234,19 @@ function comm_from_outfit(section)
 		new_comm = "stalker"
 	end
 	
+	return new_comm
+end
+
+function comm_from_outfit(section)
+	local new_comm = default_faction
+	
+	for k,v in pairs(outfits_by_community) do
+		if(string.match(section,k)) then
+			new_comm = v
+			debug_sc(strformat("New Outfit faction: %s"), new_comm)
+			return new_comm
+		end
+	end
 	return new_comm
 end
 
@@ -290,6 +301,7 @@ function anybody_remember()
 end
 
 function on_game_load()
+	--loadIniConfigs()
 	-- Azazel Disguise Fix
 	if(alife_storage_manager.get_state().azazel_db_new ~= nil and alife_storage_manager.get_state().azazel_db_update ~= nil) then
 		if (alife_storage_manager.get_state().azazel_db_new ~= default_faction and alife_storage_manager.get_state().azazel_db_update) then
@@ -304,7 +316,7 @@ function on_game_load()
 	else
 		fix_not_installed = true
 	end
-
+	-- end of Azazel Fix
 	--printf("DBG on_game_load")
 	local defaults = {
 		disguise_system = {
@@ -386,4 +398,31 @@ function count_table(table)
 	local count = 0
 	for _ in pairs(table) do count = count + 1 end
 	return count 
+end
+
+function setup_outf_by_communities()
+	-- Create a list of item sections that npc must keep
+	local n = config_ini:line_count("Outfits")
+	for i=0,n-1 do
+		local result, id, value	= config_ini:r_line_ex("Outfits",i,"","")
+		outfits_by_community[id] = value
+		printf("Loaded: %s = %s", id, value)
+	end
+end
+
+function loadIniConfigs()
+	setup_outf_by_communities()
+	
+	time_to_forget = alun_utils.read_from_ini(config_ini,"DisguiseCfg", "time_to_forget", "float")
+	printf("Loaded time_to_forget : %s", time_to_forget)
+	min_condition = alun_utils.read_from_ini(config_ini,"DisguiseCfg", "min_condition", "float")
+	printf("Loaded min_condition: %s", min_condition)
+	min_condition_h = alun_utils.read_from_ini(config_ini,"DisguiseCfg", "min_condition_h", "float")
+	printf("Loaded min_condition_h: %s", min_condition_h)
+	discovery_distance = alun_utils.read_from_ini(config_ini,"DisguiseCfg", "discovery_distance", "float")
+	printf("Loaded discovery_distance: %s", discovery_distance)
+	suspicion_limit = alun_utils.read_from_ini(config_ini,"DisguiseCfg", "suspicion_limit", "float")
+	printf("Loaded suspicion_limit: %s", suspicion_limit)
+	debugMessages = alun_utils.read_from_ini(config_ini,"DisguiseCfg", "debugMessages", "bool")
+	
 end
