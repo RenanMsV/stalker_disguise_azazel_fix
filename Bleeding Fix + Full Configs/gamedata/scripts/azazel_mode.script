@@ -1,9 +1,9 @@
 --- Azazel Customizable by RenanMsV for CoC 1.4.22 ---
-local addon = { version = "0.0.1", description = "Death is not the end here, get a new body after all deaths.", author = "strelocc, seargedp, SarisKhan, RenanMsV"}
+local addon = { version = "0.0.1", description = "Death is not the end here, get a new body after all deaths.", author = "coc1.4.22, RenanMsV"}
 
 local config_ini = ini_file("azazel_customizable.ltx")
 local azazel_customizable_config = {
-	
+
 	fix_bleeding = alun_utils.read_from_ini(config_ini,"azazel_config", "fix_bleeding", "bool"),
 	disable_animation = alun_utils.read_from_ini(config_ini,"azazel_config", "disable_animation", "bool"),
 	invul_time = alun_utils.read_from_ini(config_ini,"azazel_config", "invul_time", "float"),
@@ -27,11 +27,11 @@ function on_game_load()
 	if not (alife_storage_manager.get_state().enable_azazel_mode) then
 		return
 	end
-	
+
 	if (alife_storage_manager.get_state().azazel_death) then
 		alife_storage_manager.get_state().azazel_death = nil
 		SetHudMsg(strformat(game.translate_string("st_death_count"),xr_statistic.actor_statistic.deaths),8)
-		
+
 		-- Heal
 		db.actor:set_health_ex(1)
 		fix_bleeding()
@@ -60,20 +60,20 @@ function actor_on_before_death(whoID,flags)
 
 	xr_statistic.actor_statistic.deaths = xr_statistic.actor_statistic.deaths + 1
 	SetHudMsg(strformat(game.translate_string("st_death_count"),xr_statistic.actor_statistic.deaths),8)
-	
+
 	-- find victims
 	local sim = alife()
 	local gg = game_graph()
 	local avail_entities = {}
 	local squad_mates = {}
 	--local faction_mates = {}
-	for i=1,65534 do 
+	for i=1,65534 do
 		local se_obj = sim:object(i)
-		if (se_obj and IsStalker(nil,se_obj:clsid()) and se_obj:alive() and se_obj:community() ~= "zombied" and se_obj.group_id ~= 65535) then 
+		if (se_obj and IsStalker(nil,se_obj:clsid()) and se_obj:alive() and se_obj:community() ~= "zombied" and se_obj.group_id ~= 65535) then
 			if (IsSurvivalMode() or get_object_story_id(se_obj.group_id) == nil) then
-				if (axr_companions.companion_squads[se_obj.group_id]) then 
+				if (axr_companions.companion_squads[se_obj.group_id]) then
 					table.insert(squad_mates,se_obj.id)
-				--elseif (se_obj:community() == character_community(db.actor):sub(7)) then 
+				--elseif (se_obj:community() == character_community(db.actor):sub(7)) then
 					--table.insert(faction_mates,se_obj.id)
 				else
 					table.insert(avail_entities,se_obj.id)
@@ -85,11 +85,11 @@ function actor_on_before_death(whoID,flags)
 	-- prior for victim is squad or faction or other
 	--local t = #squad_mates > 0 and squad_mates or #faction_mates > 0 and faction_mates or avail_entities
 	local t = #squad_mates > 0 and squad_mates or avail_entities
-	if (#t == 0) then 
+	if (#t == 0) then
 		SetHudMsg(strformat(game.translate_string("st_death_count").." " .. game.translate_string("st_nobody_left_to_replace"),xr_statistic.actor_statistic.deaths),10)
 		return
 	end
-	
+
 	bind_stalker_ext.invulnerable_time = time_global() + 30000
 	db.actor:set_health_ex(1)
 
@@ -119,43 +119,43 @@ function actor_on_before_death(whoID,flags)
 		-- ["main_story_6_jup_ug_documents"] = true,
 		-- ["main_story_7_mon_con_documents"] = true
 	}
-	
+
 	axr_companions.remove_all_from_actor_squad()
-	
+
 	local se_obj = sim:object(t[math.random(#t)])
-	
+
 	-- make squad actor companions
 	local squad = sim:object(se_obj.group_id)
 	if (squad) then
 		SIMBOARD:assign_squad_to_smart(squad, nil)
 		axr_companions.companion_squads[squad.id] = squad
-		for k in squad:squad_members() do 
+		for k in squad:squad_members() do
 			if (k.id ~= se_obj.id) then
 				axr_companions.non_task_companions[k.id] = true
 				utils.se_obj_save_var(k.id,k.object:name(),"companion",true)
-				local member = db.storage[k.id] and db.storage[k.id].object 
+				local member = db.storage[k.id] and db.storage[k.id].object
 				if (member) then
 					axr_companions.setup_companion_logic(member,db.storage[k.id],false)
 				end
 			end
 		end
 	end
-	
+
 	local se_actor = sim:actor()
-	
-	-- actor corpse 
+
+	-- actor corpse
 	local se_mimic = sim:create("stalker_azazel",se_actor.position,se_actor.m_level_vertex_id,se_actor.m_game_vertex_id)
-	if (se_mimic) then 
+	if (se_mimic) then
 		se_mimic:set_character_name(se_actor:character_name())
 		se_mimic:set_profile_name(se_actor:profile_name())
 		se_mimic:kill()
-		
+
 		local m_data = alife_storage_manager.get_se_obj_state(se_mimic,true)
 		if (m_data) then
 			m_data.icon_name = se_actor:character_icon()
 			m_data.visual = db.actor:get_visual_name()
 		end
-		
+
 		local function release_actor_item(temp, item)
 			if not (ignore_list[item:section()]) then
 				local se_item = sim:object(item:id())
@@ -168,15 +168,15 @@ function actor_on_before_death(whoID,flags)
 		end
 		db.actor:iterate_inventory(release_actor_item,nil)
 	end
-	
+
 	-- copy data over to player
-	if (db.actor_binder and db.actor_binder.character_icon) then 
+	if (db.actor_binder and db.actor_binder.character_icon) then
 		db.actor_binder.character_icon = se_obj:character_icon()
 		db.actor:set_character_icon(db.actor_binder.character_icon)
 	end
-	
+
 	se_actor:set_character_name(se_obj:character_name())
-	
+
 	local faction = se_obj:community()
 	local new_faction = se_obj:community() -- get new faction
 	local old_faction = character_community(db.actor):sub(7) -- get old faction
@@ -184,11 +184,11 @@ function actor_on_before_death(whoID,flags)
 	db.actor:set_character_community("actor_"..faction)
 	db.actor:set_character_reputation(se_obj:reputation())
 	handle_actor_money(db.actor, se_obj)
-	
+
 	game_relations.set_community_goodwill_for_faction("actor_"..faction)
-	
+
 	-- copy all items except ignored
-	for i=1,65534 do 
+	for i=1,65534 do
 		local se_item = sim:object(i)
 		if (se_item and se_item.parent_id == se_obj.id) then
 			local sec = se_item:section_name()
@@ -197,10 +197,10 @@ function actor_on_before_death(whoID,flags)
 			end
 		end
 	end
-	
+
 	-- create outfit based on stalker visual type
 	local section = se_obj:section_name()
-	if (string.find(section,"_4")) then 
+	if (string.find(section,"_4")) then
 		local f = {
 			["stalker"] = "exo_outfit",
 			["bandit"] = "bandit_exo_outfit",
@@ -213,7 +213,7 @@ function actor_on_before_death(whoID,flags)
 			["monolith"] = "monolith_exo_outfit"
 		}
 		give_object_to_actor(f[faction] or "novice_outfit")
-	elseif (string.find(section,"_3")) then 
+	elseif (string.find(section,"_3")) then
 		local f = {
 			["stalker"] = "exo_outfit",
 			["bandit"] = "bandit_exo_outfit",
@@ -225,8 +225,8 @@ function actor_on_before_death(whoID,flags)
 			["ecolog"] = "ecolog_outfit_orange",
 			["monolith"] = "monolith_scientific_outfit"
 		}
-		give_object_to_actor(f[faction] or "novice_outfit")		
-	elseif (string.find(section,"_2")) then 
+		give_object_to_actor(f[faction] or "novice_outfit")
+	elseif (string.find(section,"_2")) then
 		local f = {
 			["stalker"] = "stalker_outfit",
 			["bandit"] = "trenchcoat_outfit",
@@ -238,8 +238,8 @@ function actor_on_before_death(whoID,flags)
 			["ecolog"] = "ecolog_outfit_green",
 			["monolith"] = "monolith_outfit"
 		}
-		give_object_to_actor(f[faction] or "novice_outfit")		
-	elseif (string.find(section,"_1")) then 
+		give_object_to_actor(f[faction] or "novice_outfit")
+	elseif (string.find(section,"_1")) then
 		local f = {
 			["stalker"] = "stalker_outfit",
 			["bandit"] = "trenchcoat_outfit",
@@ -251,8 +251,8 @@ function actor_on_before_death(whoID,flags)
 			["ecolog"] = "ecolog_outfit_green",
 			["monolith"] = "monolith_outfit"
 		}
-		give_object_to_actor(f[faction] or "novice_outfit")		
-	else 
+		give_object_to_actor(f[faction] or "novice_outfit")
+	else
 		local f = {
 			["stalker"] = "novice_outfit",
 			["bandit"] = "bandit_novice_outfit",
@@ -264,9 +264,9 @@ function actor_on_before_death(whoID,flags)
 			["ecolog"] = "ecolog_guard_outfit",
 			["monolith"] = "monolith_novice_outfit"
 		}
-		give_object_to_actor(f[faction] or "novice_outfit")		
-	end 
-	
+		give_object_to_actor(f[faction] or "novice_outfit")
+	end
+
 	-- cancel all tasks
 	local task_info = task_manager.get_task_manager().task_info
 	local task_ini = task_manager.task_ini
@@ -280,7 +280,7 @@ function actor_on_before_death(whoID,flags)
 	alife_storage_manager.get_state().azazel_db_old = old_faction -- set data
 	alife_storage_manager.get_state().azazel_db_new = new_faction -- set data
 	alife_storage_manager.get_state().azazel_db_update = true
-		
+
 	-- initiate transitition and removal of victim
 	local level_name = sim:level_name(game_graph():vertex(se_obj.m_game_vertex_id):level_id())
 	if (level_name == level.name()) then
@@ -312,7 +312,7 @@ function actor_on_before_death(whoID,flags)
 		end
 		CreateTimeEvent(0,"tele",0,tele_me_now,se_obj.id)
 	end
-	
+
 	flags.ret_value = false
 end
 
@@ -360,12 +360,12 @@ end
 
 function debug_sc(text, icon) -- debug function
 	if not azazel_customizable_config["debugMessages"] then return end
-	news_manager.send_tip(db.actor, "Disguise >> Debug Message" .. "\\n" .. text, nil, "tourist", 50000)
-	alun_utils.printf(("Azazel Customizable >> Debug Message" .. "\\n" .. text))
+	news_manager.send_tip(db.actor, "Azazel Fix >> Debug Message" .. "\\n" .. text, nil, "tourist", 50000)
+	alun_utils.printf(("Azazel Fix >> Debug Message" .. "\\n" .. text))
 end
 
 function debug_vars() -- return config and extra vars as strings
-	if not azazel_customizable_config["debugMessages"] then return "" end 
+	if not azazel_customizable_config["debugMessages"] then return "" end
 	return strformat("Configs: Fix Bleeding: %s , Disable Animation: %s , Gain Money: %s , Lose All Money: %s , Stalker Money: %s", azazel_customizable_config["fix_bleeding"], azazel_customizable_config["disable_animation"], azazel_customizable_config["gain_money"], azazel_customizable_config["lose_all_money"], azazel_customizable_config["stalker_money"])
 end
 

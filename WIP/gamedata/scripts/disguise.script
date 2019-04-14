@@ -5,32 +5,22 @@
 -- Tweaked for CoC 1.4.22: SarisKhan; Azazel mode fix: RenanMsV
 ----------------------
 
+local addon = { version = "0.0.1", description = "Disguise yourself using other faction's outfits.", author = "strelocc, seargedp, SarisKhan, RenanMsV" }
+
+------------------------------------------------------------------
+
 local config_ini = ini_file("disguise_customizable.ltx")
 local outfits_by_community = {}
 
-local addon = { version = "0.0.1", description = "Disguise yourself using other faction's outfits.", author = "strelocc, seargedp, SarisKhan, RenanMsV" }
+local time_to_forget, min_condition, min_condition_h, discovery_distance, suspicion_limit, debugMessages, warning_limit, dewarn_limit;
 
-local time_to_forget = 100
-local min_condition = 0.25
-local min_condition_h = 0.25
-local discovery_distance = 25
-local suspicion_limit = 100
-local debugMessages = false -- debug
-
-printf("Loaded time_to_forget : %s", time_to_forget)
-printf("Loaded min_condition: %s", min_condition)
-printf("Loaded min_condition_h: %s", min_condition_h)
-printf("Loaded discovery_distance: %s", discovery_distance)
-printf("Loaded suspicion_limit: %s", suspicion_limit)
-
-local warning_limit = suspicion_limit * 2 / 3
-local dewarn_limit = suspicion_limit * 1 / 3
+------------------------------------------------------------------
 
 function on_game_start()
 	loadIniConfigs()
 	RegisterScriptCallback("actor_on_update",update)
 	RegisterScriptCallback("npc_on_update",npc_update)
-	
+
 	RegisterScriptCallback("on_game_load",on_game_load)
 	RegisterScriptCallback("save_state",save_state)
 	RegisterScriptCallback("load_state",load_state)
@@ -45,28 +35,28 @@ local fix_not_installed = false
 
 function npc_update(npc)
 	if not default_faction or not db.actor then return end
-	
+
 	local npc_is_enemy = game_relations.is_factions_enemies(default_faction, npc:character_community()) or npc:relation(db.actor) == game_object.enemy
 
 	local current = character_community(db.actor):sub(7)
 	if current ~= default_faction and npc:see(db.actor) and npc_is_enemy then
 		local id = npc:id()
 		last_seen[id] = game.get_game_time()
-		
+
 		if suspicion[id] then
 			local distance = npc:position():distance_to_sqr(db.actor:position())
 			suspicion[id] = suspicion[id] + suspicion_increase(distance)
-			
+
 			if (suspicion[id] > suspicion_limit) then
 				db.actor:set_character_community( ("actor_" .. default_faction), 0, 0 )
-				if not callout then 
-					news_manager.send_tip(db.actor, "You have been discovered! Everybody knows you are a " .. game.translate_string(default_faction) .." member in disguise.", nil, nil, 5000) 
+				if not callout then
+					news_manager.send_tip(db.actor, "You have been discovered! Everybody knows you are a " .. game.translate_string(default_faction) .." member in disguise.", nil, nil, 5000)
 					--printf("discovered at %s",os.date("%X"))
 					callout = true
 					warned = true
 				end
 			elseif not warned and suspicion[id] > warning_limit then
-				news_manager.send_tip(db.actor, "You are getting suspicious looks. Someone may see through your disguise if you are not careful.", nil, nil, 5000) 
+				news_manager.send_tip(db.actor, "You are getting suspicious looks. Someone may see through your disguise if you are not careful.", nil, nil, 5000)
 				warned = true
 			end
 		else
@@ -92,7 +82,7 @@ function npc_update(npc)
 			end
 		end
 		if not suspicious then
-			news_manager.send_tip(db.actor, "You have narrowly avoided exposure. For now, your disguise remains effective.", nil, nil, 5000) 
+			news_manager.send_tip(db.actor, "You have narrowly avoided exposure. For now, your disguise remains effective.", nil, nil, 5000)
 			warned = false
 		end
 	end
@@ -101,15 +91,15 @@ end
 function suspicion_increase(distance)
 
 	local increase = 1
-	
+
 	if(distance > discovery_distance) then
 		increase = 0
 	else
 		local helm = db.actor:item_in_slot(12)
 		local outfit = db.actor:item_in_slot(7)
-		
+
 		local helm_cover = false
-		
+
 		if outfit then
 			local integrated_h = alun_utils.read_from_ini(nil,outfit:section(),"helmet_avaliable","bool",false)
 			if (not integrated_h) then
@@ -130,10 +120,10 @@ function suspicion_increase(distance)
 				end
 			end
 		end
-		
+
 		increase = helm_cover and 0.5 or 1
 	end
-	
+
 	return increase
 end
 
@@ -147,15 +137,15 @@ function update()
 	end
 
 	local outfit = db.actor:item_in_slot(7)
-	
+
 	local broken = outfit and outfit:condition() or 0
-	
+
 	broken = broken < min_condition
-	
+
 	outfit = outfit and outfit:section() or "naked"
-	
+
 	local new_comm
-	
+
 	if (oldfit and oldfit ~= outfit) then
 		if(outfit == "naked") then
 			new_comm = default_faction
@@ -202,7 +192,7 @@ function change_to(x,naked)
 		else
 			news_manager.send_tip(db.actor, "With this outfit people will assume you're a member of the " .. game.translate_string(x) .. " faction.", nil, nil, 5000)
 		end
-		
+
 		db.actor:set_character_community( ("actor_" .. x), 0, 0 )
 		game_relations.set_community_goodwill_for_faction("actor_"..x)
 		suspicion = {}
@@ -211,39 +201,13 @@ function change_to(x,naked)
 	end
 end
 
-function comm_from_outfit_old(section)
-	local new_comm = default_faction
-	
-	if(string.match(section,"specops_") or string.match(section,"military_")) then
-		new_comm = "army"
-	elseif(string.match(section,"bandit_") or string.match(section,"trenchcoat_") or string.match(section,"banditmerc_")) then
-		new_comm = "bandit"
-	elseif(string.match(section,"cs_")) then
-		new_comm = "csky"	
-	elseif(string.match(section,"svoboda_")) then
-		new_comm = "freedom"	
-	elseif(string.match(section,"ecolog_")) then
-		new_comm = "ecolog"	
-	elseif(string.match(section,"dolg_")) then
-		new_comm = "dolg"
-	elseif(string.match(section,"merc_")) then
-		new_comm = "killer"
-	elseif(string.match(section,"monolith_")) then
-		new_comm = "monolith"
-	elseif(string.match(section,"stalker_") or string.match(section,"scientific_") or string.match(section,"exo_") or string.match(section,"novice_")) then
-		new_comm = "stalker"
-	end
-	
-	return new_comm
-end
-
 function comm_from_outfit(section)
 	local new_comm = default_faction
-	
+
 	for k,v in pairs(outfits_by_community) do
 		if(string.match(section,k)) then
 			new_comm = v
-			debug_sc(strformat("New Outfit faction: %s"), new_comm)
+			debug_sc("New faction outfit: " .. game.translate_string(new_comm));
 			return new_comm
 		end
 	end
@@ -397,14 +361,14 @@ function count_table(table)
 	if table == nil then return "nil" end
 	local count = 0
 	for _ in pairs(table) do count = count + 1 end
-	return count 
+	return count
 end
 
 function setup_outf_by_communities()
 	-- Create a list of item sections that npc must keep
-	local n = config_ini:line_count("Outfits")
+	local n = config_ini:line_count("outfits")
 	for i=0,n-1 do
-		local result, id, value	= config_ini:r_line_ex("Outfits",i,"","")
+		local result, id, value	= config_ini:r_line_ex("outfits",i,"","")
 		outfits_by_community[id] = value
 		printf("Loaded: %s = %s", id, value)
 	end
@@ -412,17 +376,20 @@ end
 
 function loadIniConfigs()
 	setup_outf_by_communities()
-	
-	time_to_forget = alun_utils.read_from_ini(config_ini,"DisguiseCfg", "time_to_forget", "float")
+
+	time_to_forget = alun_utils.read_from_ini(config_ini,"disguise_cfg", "time_to_forget", "float")
 	printf("Loaded time_to_forget : %s", time_to_forget)
-	min_condition = alun_utils.read_from_ini(config_ini,"DisguiseCfg", "min_condition", "float")
+	min_condition = alun_utils.read_from_ini(config_ini,"disguise_cfg", "min_condition", "float")
 	printf("Loaded min_condition: %s", min_condition)
-	min_condition_h = alun_utils.read_from_ini(config_ini,"DisguiseCfg", "min_condition_h", "float")
+	min_condition_h = alun_utils.read_from_ini(config_ini,"disguise_cfg", "min_condition_h", "float")
 	printf("Loaded min_condition_h: %s", min_condition_h)
-	discovery_distance = alun_utils.read_from_ini(config_ini,"DisguiseCfg", "discovery_distance", "float")
+	discovery_distance = alun_utils.read_from_ini(config_ini,"disguise_cfg", "discovery_distance", "float")
 	printf("Loaded discovery_distance: %s", discovery_distance)
-	suspicion_limit = alun_utils.read_from_ini(config_ini,"DisguiseCfg", "suspicion_limit", "float")
+	suspicion_limit = alun_utils.read_from_ini(config_ini,"disguise_cfg", "suspicion_limit", "float")
 	printf("Loaded suspicion_limit: %s", suspicion_limit)
-	debugMessages = alun_utils.read_from_ini(config_ini,"DisguiseCfg", "debugMessages", "bool")
-	
+	debugMessages = alun_utils.read_from_ini(config_ini,"disguise_cfg", "debugMessages", "bool")
+
+	warning_limit = suspicion_limit * 2 / 3
+	dewarn_limit = suspicion_limit * 1 / 3
+
 end
