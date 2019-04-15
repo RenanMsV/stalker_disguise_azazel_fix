@@ -3,7 +3,19 @@ Outfit Disguise + Azazel Fix/Configs for Vanilla CoC 1.4.22
 strelocc, sariskhan, RenanMsV
 
 This mod is only for Vanilla CoC 1.4.22.
-This is just a fix to use with CoC Azazel Mode.
+
+This is just an improved version with many fixes to use the disguise mod with vanilla CoC Azazel Mode.
+
+
+Do you ever wanted to use the disguise mod in Azazel mode without it glitching out? You can! (fixed glitch where your faction becomes freezed and never changes)
+
+Do you ever wanted to disguise as Monolith and finish the game faster? You can!
+
+Do you ever wanted to fix the Azazel radiation / bleeding? Or remove the transition animation? You can!
+
+Do you ever wanted play HARD and LOSE your money when dying and start all over again? You can! (vanilla azazel gives you RU2000 when you die)
+
+And many more!
 
 You can use this mod to loot outfits from stalkers: https://www.moddb.com/mods/call-of-chernobyl/addons/outfit-loot-vanilla-coc-1422-fully-configurable
 
@@ -11,6 +23,7 @@ How to install:
 
 * Copy and replace this mod's gamedata folder into your game's gamedata folder.
 * Edit the config file as you like.
+* Note: You can use the Azazel fix mod alone, but to run this version of Disguise mod the Azazel fix mod is required.
 
 Using this Outfit Disguise + Azazel Mod you can:
 
