@@ -5,7 +5,7 @@
 -- Tweaked for CoC 1.4.22: SarisKhan; Azazel mode fix: RenanMsV
 ----------------------
 
-local addon = { version = "0.0.1", description = "Disguise yourself using other faction's outfits.", author = "strelocc, seargedp, SarisKhan, RenanMsV" }
+local addon = { version = "0.0.1-R1", description = "Disguise yourself using other faction's outfits.", author = "strelocc, seargedp, SarisKhan, RenanMsV" }
 
 ------------------------------------------------------------------
 
@@ -202,16 +202,15 @@ function change_to(x,naked)
 end
 
 function comm_from_outfit(section)
-	local new_comm = default_faction
+	local new_comm
 
 	for k,v in pairs(outfits_by_community) do
-		if(string.match(section,k)) then
+		if (string.starts_with(section, k)) then
 			new_comm = v
 			debug_sc("New faction outfit: " .. game.translate_string(new_comm));
-			return new_comm
 		end
 	end
-	return new_comm
+	return new_comm or default_faction
 end
 
 function update_default(faction)
@@ -347,9 +346,11 @@ function load_state(data)
 	--printf("DBG default " .. (default_faction or "?"))
 end
 
-function debug_sc(text, icon) -- debug function
+function debug_sc(text, time, icon) -- debug function
+	time = time or 50000
+	icon = icon or "tourist"
 	if not debugMessages then return end
-	news_manager.send_tip(db.actor, "Disguise >> Debug Message" .. "\\n" .. text, nil, "tourist", 50000)
+	news_manager.send_tip(db.actor, "Disguise >> Debug Message" .. "\\n" .. text, nil, icon, time)
 	alun_utils.printf(("Disguise >> Debug Message" .. "\\n" .. text))
 end
 
@@ -365,13 +366,17 @@ function count_table(table)
 end
 
 function setup_outf_by_communities()
-	-- Create a list of item sections that npc must keep
+	-- Get the outfit by factions from the config file
 	local n = config_ini:line_count("outfits")
 	for i=0,n-1 do
 		local result, id, value	= config_ini:r_line_ex("outfits",i,"","")
 		outfits_by_community[id] = value
 		printf("Loaded: %s = %s", id, value)
 	end
+end
+
+function string.starts_with(String,Start)
+	return string.sub(String,1,string.len(Start))==Start
 end
 
 function loadIniConfigs()
